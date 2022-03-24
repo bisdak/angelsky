@@ -10,8 +10,55 @@ class LiderMartRuSpider(scrapy.Spider):
     allowed_domains = ['lider-mart.ru']
 
     def start_requests(self):
-        url = 'https://www.lider-mart.ru/sitemap.xml'
-        yield scrapy.Request(url, callback=self.parse_sitemap)
+        yield self.ajax_query_show_more_products(category_id=641, page=1)
+
+    def ajax_query_show_more_products(self, category_id, page):
+        url = 'https://www.lider-mart.ru/Category/GetProducts/'
+
+        headers = {
+            "Host": "www.lider-mart.ru",
+            "Connection": "keep-alive",
+            "Accept": "application/json, text/javascript, */*; q=0.01",
+            "Content-Type": "application/x-www-form-urlencoded; charset=UTF-8",
+            "X-Requested-With": "XMLHttpRequest",
+            "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/99.0.4844.82 Safari/537.36",
+            "Origin": "https://www.lider-mart.ru",
+            "Referer": "https://www.lider-mart.ru/category/641",
+            "Accept-Encoding": "gzip, deflate, br",
+            "Accept-Language": "en-US,en;q=0.9",
+        }
+
+        body = f"page={page}&orderName=NameAscending&groupName=NotGroup&filterMinPrice=&filterMaxPrice=&filterMinVolume=&filterMaxVolume=&categoryID={category_id}"
+
+        return scrapy.Request(
+            url=url,
+            method='POST',
+            dont_filter=False,
+            headers=headers,
+            body=body,
+            meta={'dont_redirect': True},
+            cb_kwargs={'page': page, 'category_id': category_id},
+            callback=self.parse_show_more_product_response
+        )
+
+
+    def parse_show_more_product_response(self, response, page, category_id):
+        json_response = response.json()
+
+        if 'ProductsAndSliderLineByGroup' in json_response:
+            yield self.ajax_query_show_more_products(category_id, page+1)
+
+            for product_group in json_response['ProductsAndSliderLineByGroup']:
+                group = product_group.get('ProductsAndSliderLine', {})
+                for product in group.get('Products', []):
+                    try:
+                        product_id = product['ProductId']
+                        product_url = f'https://www.lider-mart.ru/product/{product_id}'
+
+                        yield scrapy.Request(product_url, callback=self.parse_product)
+                    except KeyError:
+                        continue
+
 
     def parse_sitemap(self, response):
         response.selector.remove_namespaces()
@@ -22,14 +69,14 @@ class LiderMartRuSpider(scrapy.Spider):
     def parse_description_table(self, response):
         table = {}
         for tr in response.css('.product_description table.description tr'):
-            key = tr.css('.description_left div::text').get().strip()
-            val = tr.css('.description_right div::text').get()
+            key = strip_markup(tr.css('.description_left').get())
+            val = strip_markup(tr.css('.description_right').get())
 
             if isinstance(val, str):
                 table[key] = val.strip()
         return table
 
-    def parse_description_under_tabs(self, response):
+    def parse_text_under_tabs(self, response):
         tabs = response.css('.product_description_full .title li::text').getall()
 
         table = {}
@@ -39,8 +86,15 @@ class LiderMartRuSpider(scrapy.Spider):
         return table
 
     def parse_product(self, response):
-        description = self.parse_description_table(response)
-        tabs = self.parse_description_under_tabs(response)
+        try:
+            description = self.parse_description_table(response)
+        except:
+            description = {}
+        
+        try:
+            tabs = self.parse_text_under_tabs(response)
+        except:
+            tabs = {}
 
         p = Product()
         p['volume'] = description.get('Объём:', None)
@@ -68,9 +122,9 @@ class LiderMartRuSpider(scrapy.Spider):
                                        cb_kwargs=dict(product=p), meta={'dont_redirect': True})
 
     def parse_barcode(self, response, product):
-        json = response.json()
+        json_response = response.json()
 
-        product['barcode'] = json.get('Barcode', None)
-        product['article'] = json.get('Article', None)
+        product['barcode'] = json_response.get('BarCode', None)
+        product['article'] = json_response.get('Article', None)
 
         yield product

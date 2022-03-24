@@ -61,6 +61,9 @@ DOWNLOAD_DELAY = 1
 #EXTENSIONS = {
 #    'scrapy.extensions.telnet.TelnetConsole': None,
 #}
+FEED_EXPORTERS = {
+    'xlsx': 'scrapy_xlsx.XlsxItemExporter',
+}
 
 # Configure item pipelines
 # See https://docs.scrapy.org/en/latest/topics/item-pipeline.html
@@ -69,9 +72,6 @@ ITEM_PIPELINES = {
 }
 
 
-FEED_EXPORTERS = {
-    'xlsx': 'scrapy_xlsx.XlsxItemExporter',
-}
 # Enable and configure the AutoThrottle extension (disabled by default)
 # See https://docs.scrapy.org/en/latest/topics/autothrottle.html
 #AUTOTHROTTLE_ENABLED = True
