@@ -10,9 +10,13 @@ class LiderMartRuSpider(scrapy.Spider):
     allowed_domains = ['lider-mart.ru']
 
     def start_requests(self):
-        yield self.ajax_query_show_more_products(category_id=641, page=1)
+        category_ids = [1106, 2481]
+        sesderma_group_id = 5667
 
-    def ajax_query_show_more_products(self, category_id, page):
+        for category_id in category_ids:
+            yield self.ajax_query_show_more_products(category_id=category_id, group_id=sesderma_group_id, page=0)
+
+    def ajax_query_show_more_products(self, category_id, group_id, page):
         url = 'https://www.lider-mart.ru/Category/GetProducts/'
 
         headers = {
@@ -21,14 +25,13 @@ class LiderMartRuSpider(scrapy.Spider):
             "Accept": "application/json, text/javascript, */*; q=0.01",
             "Content-Type": "application/x-www-form-urlencoded; charset=UTF-8",
             "X-Requested-With": "XMLHttpRequest",
-            "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/99.0.4844.82 Safari/537.36",
             "Origin": "https://www.lider-mart.ru",
             "Referer": "https://www.lider-mart.ru/category/641",
             "Accept-Encoding": "gzip, deflate, br",
             "Accept-Language": "en-US,en;q=0.9",
         }
 
-        body = f"page={page}&orderName=NameAscending&groupName=NotGroup&filterMinPrice=&filterMaxPrice=&filterMinVolume=&filterMaxVolume=&categoryID={category_id}"
+        body = f"page={page}&orderName=NameAscending&groupName=NotGroup&filterGroupID={group_id}&filterMinPrice=&filterMaxPrice=&filterMinVolume=&filterMaxVolume=&categoryID={category_id}"
 
         return scrapy.Request(
             url=url,
@@ -37,16 +40,16 @@ class LiderMartRuSpider(scrapy.Spider):
             headers=headers,
             body=body,
             meta={'dont_redirect': True},
-            cb_kwargs={'page': page, 'category_id': category_id},
+            cb_kwargs={'page': page, 'group_id': group_id, 'category_id': category_id},
             callback=self.parse_show_more_product_response
         )
 
 
-    def parse_show_more_product_response(self, response, page, category_id):
+    def parse_show_more_product_response(self, response, category_id, group_id, page):
         json_response = response.json()
 
         if 'ProductsAndSliderLineByGroup' in json_response:
-            yield self.ajax_query_show_more_products(category_id, page+1)
+            yield self.ajax_query_show_more_products(category_id, group_id, page+1)
 
             for product_group in json_response['ProductsAndSliderLineByGroup']:
                 group = product_group.get('ProductsAndSliderLine', {})
@@ -99,7 +102,7 @@ class LiderMartRuSpider(scrapy.Spider):
         p = Product()
         p['volume'] = description.get('Объём:', None)
         p['weight'] = description.get('Вес:', None)
-        p['product_line'] = description.get('Бренд:', None) or description.get('Производитель:', None)
+        p['product_line'] = response.css('.patch .patch_el a::text')[-1].get()
         p['composition'] = tabs.get('Состав', None)
 
         p['title'] = response.css('.product_description h1.title::text').get()
