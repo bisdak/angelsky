@@ -16,7 +16,7 @@ class LiderMartRuSpider(scrapy.Spider):
     def parse_sitemap(self, response):
         response.selector.remove_namespaces()
 
-        for product_url in response.xpath('//url/loc/text()').getall()[:100]:
+        for product_url in response.xpath('//url/loc/text()').getall()[:3]:
             yield scrapy.Request(product_url, callback=self.parse_product)
 
     def parse_description_table(self, response):
@@ -53,6 +53,7 @@ class LiderMartRuSpider(scrapy.Spider):
         p['currency'] = response.css('meta[itemprop=priceCurrency]::attr(content)').get()
 
         p['source'] = response.url
+        p['images'] = set(response.css('.product_image a[rel="picture"]::attr(href)').getall())
 
         product_id = response.css('#dataEncryptionProductID::attr(value)').get()
         encryption_key = response.css('#dataEncryptionKey::attr(value)').get()

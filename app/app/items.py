@@ -10,7 +10,7 @@ class Product(scrapy.Item):
     article = scrapy.Field()
     barcode = scrapy.Field()
     composition = scrapy.Field()
-    photo = scrapy.Field()
+    images = scrapy.Field()
     source = scrapy.Field()
     currency = scrapy.Field()
     product_id = scrapy.Field()
