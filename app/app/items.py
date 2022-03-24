@@ -1,6 +1,7 @@
 import scrapy
 
 class Product(scrapy.Item):
+    generated_id = scrapy.Field()
     title = scrapy.Field()
     product_line = scrapy.Field()
     volume = scrapy.Field()
