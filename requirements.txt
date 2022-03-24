@@ -6,7 +6,9 @@ charset-normalizer==2.0.12
 constantly==15.1.0
 cryptography==36.0.2
 cssselect==1.1.0
+et-xmlfile==1.1.0
 filelock==3.6.0
+htmllaundry==2.2
 hyperlink==21.0.0
 idna==3.3
 incremental==21.3.0
@@ -14,7 +16,9 @@ itemadapter==0.5.0
 itemloaders==1.0.4
 jmespath==1.0.0
 lxml==4.8.0
+openpyxl==3.0.9
 parsel==1.6.0
+pkg_resources==0.0.0
 Protego==0.2.1
 pyasn1==0.4.8
 pyasn1-modules==0.2.8
@@ -25,6 +29,7 @@ queuelib==1.6.2
 requests==2.27.1
 requests-file==1.5.1
 Scrapy==2.6.1
+scrapy-xlsx==0.1.1
 service-identity==21.1.0
 six==1.16.0
 tldextract==3.2.0
