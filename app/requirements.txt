@@ -2,3 +2,4 @@ htmllaundry==2.2
 ipdb==0.13.9
 Scrapy==2.6.1
 scrapy-xlsx==0.1.1
+PyMySQL==1.0.2

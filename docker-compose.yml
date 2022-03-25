@@ -4,5 +4,10 @@ services:
   scrapy:
     container_name: scrapy
     build:
-      context: ./
-    command: python3 ./app/runspiders.py
+      context: ./app
+    environment:
+      MYSQL_USER: secret
+      MYSQL_PASSWORD: secret
+      MYSQL_HOST: 255.255.255.255
+      MYSQL_DB: secret
+    command: python ./runspiders.py
