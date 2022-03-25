@@ -1,0 +1,8 @@
+version: "3.5"
+
+services:
+  scrapy:
+    container_name: scrapy
+    build:
+      context: ./
+    command: python3 ./app/runspiders.py
